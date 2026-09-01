@@ -197,3 +197,40 @@ def test_create_task_appends_to_existing_tasks_and_is_visible_in_listing():
 
     ids = [task["id"] for task in list_response.json()["tasks"]]
     assert new_task_id in ids
+
+def test_get_user_profile_returns_user():
+    response = client.get("/users/1")
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["id"] == 1
+    assert body["name"] == "John Doe"
+    assert body["email"] == "john.doe@example.com"
+    assert "created_at" in body
+
+
+def test_get_user_profile_returns_404_for_unknown_user():
+    response = client.get("/users/9999")
+
+    assert response.status_code == 404
+
+
+def test_get_user_profile_does_not_expose_sensitive_information():
+    response = client.get("/users/1")
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert "password" not in body
+    assert "password_hash" not in body
+    assert "authentication_token" not in body
+    assert "token" not in body
+
+
+def test_get_user_profile_rejects_invalid_user_id():
+    response = client.get("/users/not-a-number")
+
+    assert response.status_code == 422

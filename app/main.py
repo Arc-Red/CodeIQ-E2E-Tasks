@@ -1,9 +1,10 @@
 import math
 
-from fastapi import FastAPI, Query, status
+from fastapi import FastAPI, HTTPException, Query, status
 
-from .models import Task, TaskCreate, TaskListResponse, TaskPriority, TaskStatus
+from .models import Task, TaskCreate, TaskListResponse, TaskPriority, TaskStatus, User
 from .tasks import create_task, list_tasks
+from .users import get_user
 from .validation import validate_pagination
 
 
@@ -57,3 +58,15 @@ def get_tasks(
 @app.post("/tasks", response_model=Task, status_code=status.HTTP_201_CREATED)
 def post_task(task_create: TaskCreate) -> Task:
     return create_task(task_create)
+
+@app.get("/users/{user_id}", response_model=User)
+def get_user_profile(user_id: int) -> User:
+    user = get_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
