@@ -1,9 +1,9 @@
 import math
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, status
 
-from .models import TaskListResponse, TaskStatus
-from .tasks import list_tasks
+from .models import Task, TaskCreate, TaskListResponse, TaskStatus
+from .tasks import create_task, list_tasks
 from .validation import validate_pagination
 
 
@@ -47,3 +47,8 @@ def get_tasks(
             "total_pages": total_pages,
         },
     )
+
+
+@app.post("/tasks", response_model=Task, status_code=status.HTTP_201_CREATED)
+def post_task(task_create: TaskCreate) -> Task:
+    return create_task(task_create)

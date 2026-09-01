@@ -1,4 +1,4 @@
-from .models import Task, TaskStatus
+from .models import Task, TaskCreate, TaskStatus
 
 
 TASKS = [
@@ -39,3 +39,18 @@ def list_tasks(
     end = start + page_size
 
     return matching_tasks[start:end], total
+
+
+def create_task(task_create: TaskCreate) -> Task:
+    new_id = max((task.id for task in TASKS), default=0) + 1
+
+    task = Task(
+        id=new_id,
+        title=task_create.title,
+        description=task_create.description,
+        status=task_create.status,
+    )
+
+    TASKS.append(task)
+
+    return task
