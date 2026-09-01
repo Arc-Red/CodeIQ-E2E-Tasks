@@ -1,9 +1,18 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app import tasks as tasks_module
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def reset_tasks():
+    original_tasks = list(tasks_module.TASKS)
+    yield
+    tasks_module.TASKS[:] = original_tasks
 
 
 def test_get_tasks_returns_tasks():
@@ -82,3 +91,109 @@ def test_rejects_unsupported_status():
     response = client.get("/tasks?status=BLOCKED")
 
     assert response.status_code == 422
+
+
+def test_create_task_returns_created_task():
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Implement API integration",
+            "description": "Connect the task service to the backend",
+        },
+    )
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert body["title"] == "Implement API integration"
+    assert body["description"] == "Connect the task service to the backend"
+    assert "id" in body
+
+
+def test_create_task_requires_title():
+    response = client.post("/tasks", json={"description": "No title provided"})
+
+    assert response.status_code == 422
+
+
+def test_create_task_description_is_optional():
+    response = client.post("/tasks", json={"title": "Task without description"})
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert body["title"] == "Task without description"
+    assert body["description"] is None
+
+
+def test_create_task_defaults_to_todo_status():
+    response = client.post("/tasks", json={"title": "Task with default status"})
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert body["status"] == "TODO"
+
+
+def test_create_task_accepts_valid_explicit_status():
+    response = client.post(
+        "/tasks",
+        json={"title": "Task in progress", "status": "IN_PROGRESS"},
+    )
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert body["status"] == "IN_PROGRESS"
+
+
+def test_create_task_rejects_unsupported_status():
+    response = client.post(
+        "/tasks",
+        json={"title": "Task with bad status", "status": "BLOCKED"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_task_generates_created_at_on_server():
+    response = client.post("/tasks", json={"title": "Task with timestamp"})
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert "created_at" in body
+    assert body["created_at"] is not None
+
+
+def test_create_task_ignores_client_supplied_created_at():
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Task with spoofed timestamp",
+            "created_at": "1999-01-01T00:00:00Z",
+        },
+    )
+
+    assert response.status_code == 201
+
+    body = response.json()
+
+    assert body["created_at"] != "1999-01-01T00:00:00Z"
+
+
+def test_create_task_appends_to_existing_tasks_and_is_visible_in_listing():
+    create_response = client.post("/tasks", json={"title": "Newly appended task"})
+    assert create_response.status_code == 201
+    new_task_id = create_response.json()["id"]
+
+    list_response = client.get("/tasks?page_size=100")
+    assert list_response.status_code == 200
+
+    ids = [task["id"] for task in list_response.json()["tasks"]]
+    assert new_task_id in ids
