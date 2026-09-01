@@ -40,3 +40,10 @@ class PaginationMetadata(BaseModel):
 class TaskListResponse(BaseModel):
     tasks: list[Task]
     metadata: PaginationMetadata
+
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+    created_at: datetime
