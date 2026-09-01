@@ -2,9 +2,22 @@ import math
 
 from fastapi import FastAPI, HTTPException, Query, status
 
-from .models import Task, TaskCreate, TaskListResponse, TaskPriority, TaskStatus, User
+from .models import (
+    Task,
+    TaskCreate,
+    TaskListResponse,
+    TaskPriority,
+    TaskStatus,
+    User,
+    NotificationPreferences,
+    NotificationPreferencesUpdate,
+)
 from .tasks import create_task, list_tasks
-from .users import get_user
+from .users import (
+    get_user,
+    get_notification_preferences,
+    update_notification_preferences,
+)
 from .validation import validate_pagination
 
 
@@ -59,6 +72,7 @@ def get_tasks(
 def post_task(task_create: TaskCreate) -> Task:
     return create_task(task_create)
 
+
 @app.get("/users/{user_id}", response_model=User)
 def get_user_profile(user_id: int) -> User:
     user = get_user(user_id)
@@ -70,3 +84,43 @@ def get_user_profile(user_id: int) -> User:
         )
 
     return user
+
+
+@app.get(
+    "/users/{user_id}/notification-preferences",
+    response_model=NotificationPreferences,
+)
+def get_user_notification_preferences(
+    user_id: int,
+) -> NotificationPreferences:
+    preferences = get_notification_preferences(user_id)
+
+    if preferences is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return preferences
+
+
+@app.put(
+    "/users/{user_id}/notification-preferences",
+    response_model=NotificationPreferences,
+)
+def put_user_notification_preferences(
+    user_id: int,
+    preferences: NotificationPreferencesUpdate,
+) -> NotificationPreferences:
+    updated_preferences = update_notification_preferences(
+        user_id,
+        preferences,
+    )
+
+    if updated_preferences is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return updated_preferences

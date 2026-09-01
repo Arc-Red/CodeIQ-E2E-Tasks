@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 
 
 class TaskStatus(str, Enum):
@@ -47,3 +47,12 @@ class User(BaseModel):
     name: str
     email: str
     created_at: datetime
+
+class NotificationPreferences(BaseModel):
+    email_notifications: bool
+    in_app_notifications: bool
+
+
+class NotificationPreferencesUpdate(BaseModel):
+    email_notifications: StrictBool
+    in_app_notifications: StrictBool
