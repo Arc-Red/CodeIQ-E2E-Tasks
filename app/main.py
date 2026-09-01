@@ -2,7 +2,7 @@ import math
 
 from fastapi import FastAPI, Query, status
 
-from .models import Task, TaskCreate, TaskListResponse, TaskStatus
+from .models import Task, TaskCreate, TaskListResponse, TaskPriority, TaskStatus
 from .tasks import create_task, list_tasks
 from .validation import validate_pagination
 
@@ -19,6 +19,10 @@ def get_tasks(
         default=None,
         description="Filter tasks by status",
     ),
+    priority: TaskPriority | None = Query(
+        default=None,
+        description="Filter tasks by priority",
+    ),
     page: int = Query(
         default=1,
         description="Page number",
@@ -32,6 +36,7 @@ def get_tasks(
 
     tasks, total = list_tasks(
         status=status,
+        priority=priority,
         page=page,
         page_size=page_size,
     )

@@ -10,19 +10,25 @@ class TaskStatus(str, Enum):
     DONE = "DONE"
 
 
+class TaskPriority(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
 class Task(BaseModel):
     id: int
     title: str
     description: str | None = None
     status: TaskStatus
+    priority: TaskPriority = TaskPriority.MEDIUM
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
 
 class TaskCreate(BaseModel):
     title: str
     description: str | None = None
     status: TaskStatus = TaskStatus.TODO
-
+    priority: TaskPriority = TaskPriority.MEDIUM
 
 class PaginationMetadata(BaseModel):
     total: int
