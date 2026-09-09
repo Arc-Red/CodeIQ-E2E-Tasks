@@ -56,3 +56,16 @@ class NotificationPreferences(BaseModel):
 class NotificationPreferencesUpdate(BaseModel):
     email_notifications: StrictBool
     in_app_notifications: StrictBool
+
+class NotificationStatus(str, Enum):
+    PENDING = "pending"
+    DELIVERED = "delivered"
+    FAILED = "failed"
+
+
+class Notification(BaseModel):
+    id: int
+    user_id: int
+    message: str
+    status: NotificationStatus = NotificationStatus.PENDING
+    attempts: int = 0
